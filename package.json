@@ -1,0 +1,45 @@
+{
+  "name": "clash-pilot",
+  "version": "0.1.0",
+  "description": "Clash/Mihomo process rule manager and traffic verifier for Windows",
+  "main": "src/main.js",
+  "author": "ClashPilot",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "dist": "electron-builder --win nsis portable"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "electron": "^38.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.clashpilot.desktop",
+    "productName": "ClashPilot",
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "artifactName": "ClashPilot-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "ClashPilot-Portable-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}

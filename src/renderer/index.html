@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClashPilot</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="titlebar"><div class="brand-mini"><span class="mark">C</span> ClashPilot</div></div>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-icon">C</div><div><strong>ClashPilot</strong><span>规则与流量管家</span></div></div>
+      <nav>
+        <button class="nav-item active" data-page="overview"><span class="nav-icon">⌂</span>总览</button>
+        <button class="nav-item" data-page="rules"><span class="nav-icon">⌘</span>进程规则</button>
+        <button class="nav-item" data-page="monitor"><span class="nav-icon">◉</span>流量验证 <i id="monitorDot"></i></button>
+        <button class="nav-item" data-page="backups"><span class="nav-icon">↶</span>备份与恢复</button>
+        <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>设置</button>
+      </nav>
+      <div class="sidebar-status"><span class="status-dot" id="sideStatusDot"></span><div><b id="sideStatus">尚未连接</b><small id="sideVersion">Clash Controller</small></div></div>
+    </aside>
+    <main>
+      <section class="page active" id="page-overview">
+        <header><div><p class="eyebrow">今天的网络状态</p><h1>早上好，网络由你掌控。</h1><p class="subtitle">只让需要的应用走代理，其余连接保持本地直连。</p></div><button class="icon-button" id="refreshAll" title="刷新">↻</button></header>
+        <div class="hero-grid">
+          <article class="status-card primary-card"><div class="card-top"><span class="pill green"><i></i><span id="heroState">等待配置</span></span><span class="subtle" id="lastCheck">尚未检测</span></div><div class="hero-content"><div class="orb"><span></span></div><div><h2 id="heroTitle">选择你的 Clash 配置</h2><p id="heroDescription">连接 Controller 后即可验证规则和真实流量。</p></div></div><button class="soft-button" data-go="settings">立即设置 <span>→</span></button></article>
+          <article class="status-card"><div class="card-label">Clash / Mihomo 客户端</div><div class="metric-row"><div><strong id="startupText">已关闭</strong><small id="startupPathHint">尚未选择程序位置</small></div><label class="switch"><input id="startupToggle" type="checkbox"><span></span></label></div><div class="divider"></div><button class="text-button" data-go="settings">设置程序位置 <span>›</span></button></article>
+        </div>
+        <h3 class="section-title">实时概览</h3>
+        <div class="metrics-grid">
+          <article class="metric-card"><div class="metric-icon blue">↗</div><div><span>代理连接</span><strong id="statProxy">—</strong><small>当前活动连接</small></div></article>
+          <article class="metric-card"><div class="metric-icon gray">⇢</div><div><span>直连流量</span><strong id="statDirect">—</strong><small>按规则放行</small></div></article>
+          <article class="metric-card"><div class="metric-icon amber">!</div><div><span>疑似绕行</span><strong id="statBypass">—</strong><small>系统连接未被记录</small></div></article>
+          <article class="metric-card"><div class="metric-icon violet">⌘</div><div><span>受管应用</span><strong id="statApps">0</strong><small>进程级规则</small></div></article>
+        </div>
+        <div class="bottom-grid">
+          <article class="panel"><div class="panel-head"><div><h3>最近活动</h3><p>来自 Clash Controller 的连接</p></div><button class="text-button" data-go="monitor">查看全部</button></div><div id="recentConnections" class="connection-list empty-state">连接监控后，这里会显示实时活动</div></article>
+          <article class="panel health-panel"><div class="panel-head"><div><h3>配置健康度</h3><p>写入前后的安全检查</p></div><span class="score" id="healthScore">—</span></div><div class="health-item"><span class="check">✓</span><div><b>自动备份</b><small>每次写入前保留完整快照</small></div></div><div class="health-item"><span class="check" id="controllerCheck">·</span><div><b>Controller 连接</b><small id="controllerHealth">等待检测</small></div></div><div class="health-item"><span class="check" id="ruleCheck">·</span><div><b>规则文件</b><small id="ruleHealth">尚未选择</small></div></div></article>
+        </div>
+      </section>
+
+      <section class="page" id="page-rules">
+        <header><div><p class="eyebrow">PROCESS-NAME</p><h1>进程规则</h1><p class="subtitle">指定哪些 Windows 应用必须通过代理，规则会被放在列表最前。</p></div><button class="primary-button" id="addRule">＋ 添加应用</button></header>
+        <div class="notice"><span>◆</span><div><b>“仅指定应用代理”模式</b><p>受管进程规则之后立即加入 <code>MATCH,DIRECT</code>，保证其他应用直连；原规则保留在配置中但不再命中。</p></div></div>
+        <div class="add-app-box" id="appDropZone">
+          <div><b>拖入 .exe / 快捷方式，或粘贴完整路径</b><small>.lnk 会自动解析为它指向的真实程序</small></div>
+          <div class="path-entry"><input id="manualAppPath" placeholder="输入 .exe 或 .lnk 路径"><button class="soft-button" id="addPathRule">加入</button></div>
+        </div>
+        <article class="panel rules-panel"><div class="panel-head"><div><h3>受管应用</h3><p><span id="managedCount">0</span> 个进程由 ClashPilot 管理</p></div><div class="field compact"><label>代理策略</label><input id="policyName" value="PROXY" spellcheck="false"></div></div><div id="ruleList" class="rule-list"></div><div class="rule-footer"><span id="unsavedHint">所有更改均会先创建备份</span><button class="primary-button" id="applyRules">应用到配置</button></div></article>
+        <article class="panel mode-panel">
+          <div class="mode-title"><div><b>执行模式</b><p>从兼容优先到“无法代理就断网”的防泄漏保护</p></div><span id="modeAdminHint">严格模式</span></div>
+          <div class="mode-options">
+            <label class="mode-card"><input type="radio" name="enforcementMode" value="compatible"><span><b>兼容</b><small>仅按进程名匹配，不改 TUN 参数</small></span></label>
+            <label class="mode-card"><input type="radio" name="enforcementMode" value="strict" checked><span><b>严格</b><small>路径 + 进程名 + strict-route</small></span></label>
+            <label class="mode-card"><input type="radio" name="enforcementMode" value="force"><span><b>强制</b><small>再用防火墙封锁物理网卡直连</small></span></label>
+          </div>
+          <div class="force-warning" id="forceWarning">强制模式应用时会弹出一次 Windows 管理员授权。受管应用只能从虚拟 TUN 网卡出站；Clash 停止时这些应用会断网。</div>
+        </article>
+      </section>
+
+      <section class="page" id="page-monitor">
+        <header><div><p class="eyebrow">LIVE INSPECTOR</p><h1>流量验证</h1><p class="subtitle">对照 Clash 连接与 Windows TCP 连接，识别规则命中和潜在绕行。</p></div><div class="monitor-actions"><span class="live-badge"><i></i>每 5 秒刷新</span><button class="icon-button" id="refreshMonitor">↻</button></div></header>
+        <div class="metrics-grid monitor-metrics"><article class="metric-card"><div><span>Clash 活动连接</span><strong id="mTotal">0</strong></div></article><article class="metric-card"><div><span>经代理</span><strong id="mProxy">0</strong></div></article><article class="metric-card"><div><span>规则直连</span><strong id="mDirect">0</strong></div></article><article class="metric-card warning"><div><span>疑似绕行</span><strong id="mBypass">0</strong></div></article></div>
+        <article class="panel table-panel"><div class="panel-head"><div><h3>连接明细</h3><p id="monitorTime">等待第一次采样</p></div><div class="segmented"><button class="active" data-filter="all">全部</button><button data-filter="proxy">代理</button><button data-filter="direct">直连</button><button data-filter="bypass">疑似绕行</button></div></div><div class="table-wrap"><table><thead><tr><th>进程</th><th>目标</th><th>命中规则</th><th>链路</th><th>状态</th></tr></thead><tbody id="trafficTable"><tr><td colspan="5" class="table-empty">连接 Controller 后开始验证</td></tr></tbody></table></div></article>
+        <div class="monitor-note"><b>关于“疑似绕行”</b><p>这是启发式检测：若受管进程存在公网 TCP 连接，但 Clash Controller 中找不到对应连接，就会被标记。系统服务、QUIC/UDP 或虚拟网卡转换可能产生误报。</p></div>
+      </section>
+
+      <section class="page" id="page-backups">
+        <header><div><p class="eyebrow">TIME MACHINE</p><h1>备份与恢复</h1><p class="subtitle">每次规则写入和恢复操作前，都会创建一份完整配置快照。</p></div><button class="icon-button" id="refreshBackups">↻</button></header>
+        <article class="panel backup-panel"><div class="panel-head"><div><h3>配置快照</h3><p>按时间从新到旧排列</p></div></div><div id="backupList" class="backup-list"><div class="empty-state">还没有备份</div></div></article>
+      </section>
+
+      <section class="page" id="page-settings">
+        <header><div><p class="eyebrow">PREFERENCES</p><h1>设置</h1><p class="subtitle">连接 Clash / Mihomo，并指定要安全修改的配置文件。</p></div></header>
+        <div class="settings-grid">
+          <article class="panel form-panel"><div class="panel-title"><span class="settings-icon blue">⌘</span><div><h3>Clash 配置</h3><p>支持 Clash Meta / Mihomo YAML</p></div></div><div class="field"><label>配置文件</label><div class="input-action"><input id="configPath" placeholder="选择 config.yaml" readonly><button id="chooseConfig">选择…</button></div></div><div class="config-summary" id="configSummary"><span>尚未载入配置</span></div></article>
+          <article class="panel form-panel"><div class="panel-title"><span class="settings-icon violet">◉</span><div><h3>External Controller</h3><p>后台自动检查，无需盯着连接表</p></div></div><div class="field"><label>地址</label><input id="controller" value="127.0.0.1:9090" spellcheck="false"></div><div class="field"><label>Secret</label><input id="secret" type="password" placeholder="如未设置可留空"></div><button class="soft-button full" id="testController">测试连接</button></article>
+          <article class="panel form-panel span-2"><div class="panel-title"><span class="settings-icon amber">↥</span><div><h3>Clash / Mihomo 客户端位置</h3><p>用于开机启动；可选择客户端 .exe 或桌面快捷方式</p></div><label class="switch"><input id="settingsStartupToggle" type="checkbox"><span></span></label></div><div class="field"><label>客户端程序（不是 config.yaml）</label><div class="input-action"><input id="executablePath" placeholder="选择 Clash Verge、Clash Nyanpasu 或其他客户端" readonly><button id="chooseExecutable">选择…</button></div></div></article>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="toastHost" class="toast-host"></div>
+  <div id="confirmModal" class="modal-backdrop hidden"><div class="modal"><div class="modal-icon">↶</div><h2>恢复这份配置？</h2><p id="confirmText">当前配置会先自动备份，然后再恢复所选快照。</p><div class="modal-actions"><button class="soft-button" data-modal="cancel">取消</button><button class="primary-button" data-modal="confirm">确认恢复</button></div></div></div>
+  <script src="app.js"></script>
+</body>
+</html>
